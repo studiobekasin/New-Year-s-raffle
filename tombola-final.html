@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Новогодишна Томбола</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            height: 100vh;
+            height: -webkit-fill-available;
+            background: linear-gradient(135deg, #0c1445 0%, #1a237e 50%, #283593 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Snowflakes */
+        .snowflake {
+            position: fixed;
+            color: white;
+            font-size: 1.2rem;
+            pointer-events: none;
+            opacity: 0.7;
+            animation: fall linear infinite;
+            z-index: 1;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-100px) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(360deg); }
+        }
+
+        h1 {
+            color: #ffd700;
+            text-shadow: 0 0 20px #ffd700, 0 0 40px #ff6b6b, 0 0 60px #ffd700;
+            font-size: clamp(1.2rem, 5vw, 2.5rem);
+            text-align: center;
+            white-space: nowrap;
+            z-index: 10;
+            flex-shrink: 0;
+            margin-bottom: 8px;
+        }
+
+        .spinner-container {
+            flex: 1;
+            width: 100%;
+            background: linear-gradient(145deg, #1a237e, #0d1442);
+            border: 5px solid #ffd700;
+            border-radius: 25px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.6), inset 0 0 40px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Highlight bar in center - vertical stripe */
+        .spinner-container::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 28%;
+            transform: translateX(-50%);
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 3px solid rgba(255, 215, 0, 0.6);
+            border-right: 3px solid rgba(255, 215, 0, 0.6);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .spinner-track {
+            display: flex;
+            flex-direction: row;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 100%;
+        }
+
+        .number-item {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(6rem, 25vw, 18rem);
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
+            flex-shrink: 0;
+            transition: transform 0.3s, text-shadow 0.3s;
+        }
+
+        .number-item.winner {
+            animation: popWinner 0.5s ease-out forwards;
+        }
+
+        @keyframes popWinner {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.25); text-shadow: 0 0 80px currentColor, 0 0 120px currentColor; }
+            100% { transform: scale(1.15); text-shadow: 0 0 60px currentColor, 0 0 100px currentColor; }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            z-index: 99;
+        }
+
+        .settings-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 8px 0;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .settings-bar label {
+            color: #81d4fa;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            white-space: nowrap;
+        }
+
+        .participant-input {
+            width: 70px;
+            height: 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            color: #ffd700;
+            outline: none;
+        }
+
+        .participant-input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .set-btn {
+            padding: 8px 15px;
+            font-size: clamp(0.9rem, 3vw, 1rem);
+            background: linear-gradient(145deg, #ff9800, #f57c00);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            touch-action: manipulation;
+            box-shadow: 0 3px 15px rgba(255, 152, 0, 0.4);
+        }
+
+        .set-btn:active {
+            transform: scale(0.95);
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 500px;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .enter-btn {
+            flex: 1;
+            height: clamp(55px, 14vw, 90px);
+            font-size: clamp(1.1rem, 4vw, 1.6rem);
+            font-weight: bold;
+            background: linear-gradient(145deg, #c62828, #b71c1c);
+            color: white;
+            border: 3px solid #ffd700;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 6px 25px rgba(198, 40, 40, 0.5);
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            touch-action: manipulation;
+        }
+
+        .enter-btn:active {
+            transform: translateY(2px) scale(0.98);
+            box-shadow: 0 3px 15px rgba(198, 40, 40, 0.4);
+        }
+
+        .enter-btn.spinning {
+            background: linear-gradient(145deg, #2e7d32, #1b5e20);
+            box-shadow: 0 6px 25px rgba(46, 125, 50, 0.5);
+            animation: pulse 0.4s infinite alternate;
+        }
+
+        .enter-btn:disabled {
+            background: linear-gradient(145deg, #555, #444);
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.02); }
+        }
+
+        .reset-btn {
+            padding: 0 25px;
+            height: clamp(55px, 14vw, 90px);
+            font-size: clamp(1rem, 3.5vw, 1.3rem);
+            background: linear-gradient(145deg, #5c6bc0, #3949ab);
+            color: white;
+            border: 2px solid #7986cb;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(92, 107, 192, 0.5);
+            transition: all 0.2s;
+            touch-action: manipulation;
+            white-space: nowrap;
+        }
+
+        .reset-btn:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+            padding: 5px 0;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .status {
+            color: #e0e0e0;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+        }
+
+        .remaining {
+            color: #4fc3f7;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            font-weight: bold;
+        }
+
+        .decorations {
+            position: fixed;
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            z-index: 1;
+            opacity: 0.6;
+        }
+
+        .deco-tl { left: 10px; top: 10px; }
+        .deco-tr { right: 10px; top: 10px; }
+        .deco-bl { left: 10px; bottom: 10px; }
+        .deco-br { right: 10px; bottom: 10px; }
+
+        /* Landscape mode */
+        @media (orientation: landscape) {
+            body {
+                padding: 5px 15px;
+            }
+
+            h1 {
+                font-size: clamp(1rem, 4vh, 2rem);
+                margin-bottom: 3px;
+            }
+
+            .spinner-container {
+                flex: 1;
+            }
+
+            .number-item {
+                font-size: clamp(5rem, 35vh, 14rem);
+            }
+
+            .settings-bar {
+                padding: 3px 0;
+            }
+
+            .participant-input {
+                height: 35px;
+                width: 60px;
+            }
+
+            .controls {
+                margin-top: 5px;
+            }
+
+            .enter-btn, .reset-btn {
+                height: clamp(45px, 12vh, 70px);
+            }
+
+            .info-bar {
+                padding: 3px 0;
+            }
+        }
+
+        /* Very small screens */
+        @media (max-height: 550px) {
+            .decorations {
+                display: none;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .decorations {
+                display: none;
+            }
+
+            .settings-bar {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="decorations deco-tl">🎄</div>
+    <div class="decorations deco-tr">🎄</div>
+    <div class="decorations deco-bl">⭐</div>
+    <div class="decorations deco-br">⭐</div>
+
+    <h1>🎅 НОВОГОДИШНА ТОМБОЛА 🎅</h1>
+
+    <div class="settings-bar">
+        <label for="participantCount">👥 Брой участници:</label>
+        <input type="number" id="participantCount" class="participant-input" value="20" min="2" max="999">
+        <button class="set-btn" id="setBtn">✓ Задай</button>
+    </div>
+    
+    <div class="spinner-container" id="spinnerContainer">
+        <div class="spinner-track" id="spinnerTrack"></div>
+    </div>
+    
+    <div class="info-bar">
+        <div class="status" id="status">Натисни за старт!</div>
+        <div class="remaining" id="remaining">Оставащи: 20</div>
+    </div>
+    
+    <div class="controls">
+        <button class="enter-btn" id="enterBtn">🎰 ЗАВЪРТИ</button>
+        <button class="reset-btn" id="resetBtn">🔄 Нова</button>
+    </div>
+
+    <script>
+        // Audio context for playful music
+        let audioContext = null;
+        let musicInterval = null;
+        let gainNode = null;
+
+        // Game state
+        let totalParticipants = 20;
+        let numbers = [];
+        let isSpinning = false;
+        let isWinnerDisplayed = false;
+        let animationId = null;
+        let position = 0;
+        let speed = 35;
+        let currentIndex = 0;
+        let itemWidth = 200;
+
+        // DOM elements
+        const spinnerContainer = document.getElementById('spinnerContainer');
+        const spinnerTrack = document.getElementById('spinnerTrack');
+        const enterBtn = document.getElementById('enterBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const setBtn = document.getElementById('setBtn');
+        const participantInput = document.getElementById('participantCount');
+        const status = document.getElementById('status');
+        const remaining = document.getElementById('remaining');
+
+        // Calculate item width based on container
+        function calculateItemWidth() {
+            const containerWidth = spinnerContainer.clientWidth;
+            itemWidth = containerWidth * 0.28;
+        }
+
+        // Create snowflakes
+        function createSnowflakes() {
+            document.querySelectorAll('.snowflake').forEach(s => s.remove());
+            
+            const snowflakes = ['❄', '❅', '❆', '✦', '✧'];
+            const count = window.innerWidth < 500 ? 12 : 25;
+            
+            for (let i = 0; i < count; i++) {
+                const flake = document.createElement('div');
+                flake.className = 'snowflake';
+                flake.textContent = snowflakes[Math.floor(Math.random() * snowflakes.length)];
+                flake.style.left = Math.random() * 100 + '%';
+                flake.style.animationDuration = (3 + Math.random() * 4) + 's';
+                flake.style.animationDelay = Math.random() * 5 + 's';
+                flake.style.fontSize = (0.5 + Math.random() * 0.8) + 'rem';
+                document.body.appendChild(flake);
+            }
+        }
+
+        // Initialize numbers
+        function initNumbers() {
+            numbers = Array.from({ length: totalParticipants }, (_, i) => i + 1);
+            updateTrack();
+            updateRemaining();
+        }
+
+        // Set participant count
+        function setParticipants() {
+            const value = parseInt(participantInput.value);
+            if (value >= 2 && value <= 999) {
+                totalParticipants = value;
+                resetGame();
+                status.textContent = `Готово! ${totalParticipants} участника`;
+            } else {
+                participantInput.value = totalParticipants;
+                status.textContent = 'Въведи число между 2 и 999';
+            }
+        }
+
+        // Update the spinner track
+        function updateTrack() {
+            calculateItemWidth();
+            spinnerTrack.innerHTML = '';
+            const copies = 6;
+            for (let c = 0; c < copies; c++) {
+                numbers.forEach(num => {
+                    const div = document.createElement('div');
+                    div.className = 'number-item';
+                    div.textContent = num;
+                    div.style.color = getNumberColor(num);
+                    div.style.width = itemWidth + 'px';
+                    div.dataset.num = num;
+                    spinnerTrack.appendChild(div);
+                });
+            }
+        }
+
+        // Get color for number
+        function getNumberColor(num) {
+            const colors = [
+                '#ff6b6b', '#ffd700', '#4fc3f7', '#81c784', '#ba68c8',
+                '#ffb74d', '#e0e0e0', '#f06292', '#7986cb', '#4db6ac',
+                '#ff8a65', '#64b5f6', '#e57373', '#4dd0e1', '#ffab91',
+                '#aed581', '#fff176', '#ce93d8', '#80deea', '#b39ddb'
+            ];
+            return colors[(num - 1) % colors.length];
+        }
+
+        // Update remaining count
+        function updateRemaining() {
+            remaining.textContent = `Оставащи: ${numbers.length}`;
+        }
+
+        // Music
+        function startMusic() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            gainNode = audioContext.createGain();
+            gainNode.gain.value = 0.15;
+            gainNode.connect(audioContext.destination);
+
+            const melodies = [
+                [523, 659, 784, 659, 523, 659, 784, 1047],
+                [587, 740, 880, 740, 587, 740, 880, 587],
+                [659, 784, 988, 784, 659, 784, 988, 659],
+            ];
+            
+            let melodyIndex = 0;
+            let noteIndex = 0;
+            let currentMelody = melodies[0];
+
+            function playNote() {
+                if (!isSpinning) return;
+
+                const now = audioContext.currentTime;
+
+                const osc1 = audioContext.createOscillator();
+                const gain1 = audioContext.createGain();
+                osc1.type = 'triangle';
+                osc1.frequency.value = currentMelody[noteIndex];
+                gain1.gain.setValueAtTime(0.12, now);
+                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                osc1.connect(gain1);
+                gain1.connect(gainNode);
+                osc1.start(now);
+                osc1.stop(now + 0.12);
+
+                const osc2 = audioContext.createOscillator();
+                const gain2 = audioContext.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.value = currentMelody[noteIndex] * 1.25;
+                gain2.gain.setValueAtTime(0.06, now);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc2.connect(gain2);
+                gain2.connect(gainNode);
+                osc2.start(now);
+                osc2.stop(now + 0.1);
+
+                if (noteIndex % 4 === 0) {
+                    const bass = audioContext.createOscillator();
+                    const bassGain = audioContext.createGain();
+                    bass.type = 'sine';
+                    bass.frequency.value = currentMelody[0] / 2;
+                    bassGain.gain.setValueAtTime(0.08, now);
+                    bassGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    bass.connect(bassGain);
+                    bassGain.connect(gainNode);
+                    bass.start(now);
+                    bass.stop(now + 0.2);
+                }
+
+                if (noteIndex % 2 === 0) {
+                    const sparkle = audioContext.createOscillator();
+                    const sparkleGain = audioContext.createGain();
+                    sparkle.type = 'sine';
+                    sparkle.frequency.value = currentMelody[noteIndex] * 2;
+                    sparkleGain.gain.setValueAtTime(0.03, now);
+                    sparkleGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    sparkle.connect(sparkleGain);
+                    sparkleGain.connect(gainNode);
+                    sparkle.start(now);
+                    sparkle.stop(now + 0.08);
+                }
+
+                noteIndex++;
+                if (noteIndex >= currentMelody.length) {
+                    noteIndex = 0;
+                    melodyIndex = (melodyIndex + 1) % melodies.length;
+                    currentMelody = melodies[melodyIndex];
+                }
+
+                if (isSpinning) {
+                    musicInterval = setTimeout(playNote, 100);
+                }
+            }
+
+            playNote();
+        }
+
+        function stopMusic() {
+            if (musicInterval) {
+                clearTimeout(musicInterval);
+                musicInterval = null;
+            }
+            if (gainNode) {
+                gainNode.gain.value = 0;
+            }
+        }
+
+        function playWinSound() {
+            if (!audioContext) return;
+            
+            const now = audioContext.currentTime;
+            const winGain = audioContext.createGain();
+            winGain.gain.value = 0.2;
+            winGain.connect(audioContext.destination);
+
+            const fanfare = [523, 659, 784, 1047, 1319, 1568];
+            fanfare.forEach((freq, i) => {
+                const osc = audioContext.createOscillator();
+                const noteGain = audioContext.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = freq;
+                noteGain.gain.setValueAtTime(0.15, now + i * 0.1);
+                noteGain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.3);
+                osc.connect(noteGain);
+                noteGain.connect(winGain);
+                osc.start(now + i * 0.1);
+                osc.stop(now + i * 0.1 + 0.3);
+            });
+        }
+
+        // Animation - horizontal scrolling (right to left)
+        function animate() {
+            if (!isSpinning) return;
+
+            position -= speed;
+            const totalWidth = itemWidth * numbers.length;
+
+            if (position <= -totalWidth) {
+                position += totalWidth;
+            }
+
+            spinnerTrack.style.transform = `translateY(-50%) translateX(${position}px)`;
+
+            // Calculate current visible number (center of container)
+            const containerWidth = spinnerContainer.clientWidth;
+            const centerOffset = containerWidth / 2 - itemWidth / 2;
+            const adjustedPos = Math.abs(position) + centerOffset;
+            currentIndex = Math.floor(adjustedPos / itemWidth) % numbers.length;
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // Start spinning
+        function startSpin() {
+            if (numbers.length === 0) {
+                status.textContent = 'Натисни "Нова" за рестарт!';
+                return;
+            }
+
+            if (isWinnerDisplayed) {
+                // Remove previous winner and continue
+                const winner = numbers[currentIndex];
+                numbers = numbers.filter(n => n !== winner);
+                updateTrack();
+                updateRemaining();
+                position = 0;
+                isWinnerDisplayed = false;
+                
+                if (numbers.length === 0) {
+                    status.textContent = '🏆 Всички числа са изтеглени!';
+                    enterBtn.textContent = '🎰 ЗАВЪРТИ';
+                    return;
+                }
+            }
+
+            isSpinning = true;
+            enterBtn.textContent = '🛑 СПРИ';
+            enterBtn.classList.add('spinning');
+            status.textContent = '🎵 Върти се...';
+            
+            // Disable settings while spinning
+            participantInput.disabled = true;
+            setBtn.disabled = true;
+            
+            startMusic();
+            animate();
+        }
+
+        // Stop spinning
+        function stopSpin() {
+            isSpinning = false;
+            isWinnerDisplayed = true;
+            cancelAnimationFrame(animationId);
+            stopMusic();
+
+            enterBtn.textContent = '▶️ ПРОДЪЛЖИ';
+            enterBtn.classList.remove('spinning');
+            
+            // Re-enable settings
+            participantInput.disabled = false;
+            setBtn.disabled = false;
+
+            const winner = numbers[currentIndex];
+            
+            playWinSound();
+
+            // Find and animate the winner number in view
+            const items = spinnerTrack.querySelectorAll('.number-item');
+            items.forEach(item => {
+                if (parseInt(item.dataset.num) === winner) {
+                    item.classList.add('winner');
+                }
+            });
+
+            createConfetti();
+
+            status.textContent = `🎉 Число ${winner}!`;
+        }
+
+        // Confetti
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#ffd700', '#4fc3f7', '#81c784', '#ba68c8', '#ffb74d', '#f06292', '#7986cb'];
+            const shapes = ['❄', '✦', '★', '●', '■'];
+            const confettiCount = window.innerWidth < 500 ? 50 : 100;
+
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                
+                if (Math.random() > 0.5) {
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                    confetti.style.width = `${5 + Math.random() * 10}px`;
+                    confetti.style.height = `${5 + Math.random() * 10}px`;
+                } else {
+                    confetti.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+                    confetti.style.fontSize = `${10 + Math.random() * 14}px`;
+                    confetti.style.color = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = 'auto';
+                    confetti.style.height = 'auto';
+                }
+                
+                confetti.style.left = `${50 + (Math.random() - 0.5) * 60}%`;
+                confetti.style.top = '40%';
+                
+                document.body.appendChild(confetti);
+
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 5 + Math.random() * 10;
+                const vx = Math.cos(angle) * velocity;
+                const vy = Math.sin(angle) * velocity - 5;
+                let x = 0;
+                let y = 0;
+                let rotation = 0;
+                let opacity = 1;
+
+                function animateConfetti() {
+                    x += vx;
+                    y += vy + 2.5;
+                    rotation += 8 + Math.random() * 5;
+                    opacity -= 0.02;
+
+                    confetti.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
+                    confetti.style.opacity = opacity;
+
+                    if (opacity > 0) {
+                        requestAnimationFrame(animateConfetti);
+                    } else {
+                        confetti.remove();
+                    }
+                }
+
+                setTimeout(() => animateConfetti(), Math.random() * 300);
+            }
+        }
+
+        // Toggle
+        function toggleSpin() {
+            if (isSpinning) {
+                stopSpin();
+            } else {
+                startSpin();
+            }
+        }
+
+        // Reset
+        function resetGame() {
+            isSpinning = false;
+            isWinnerDisplayed = false;
+            cancelAnimationFrame(animationId);
+            stopMusic();
+            position = 0;
+            enterBtn.textContent = '🎰 ЗАВЪРТИ';
+            enterBtn.classList.remove('spinning');
+            participantInput.disabled = false;
+            setBtn.disabled = false;
+            initNumbers();
+            spinnerTrack.style.transform = `translateY(-50%) translateX(0px)`;
+            status.textContent = 'Натисни за старт!';
+        }
+
+        // Events
+        enterBtn.addEventListener('click', toggleSpin);
+        resetBtn.addEventListener('click', resetGame);
+        setBtn.addEventListener('click', setParticipants);
+
+        participantInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                setParticipants();
+                participantInput.blur();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && document.activeElement !== participantInput) {
+                e.preventDefault();
+                toggleSpin();
+            }
+        });
+
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                updateTrack();
+                createSnowflakes();
+            }, 250);
+        });
+
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target === document.body) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Init
+        createSnowflakes();
+        initNumbers();
+    </script>
+</body>
+</html>
