@@ -72,6 +72,7 @@
             min-height: 120px;
             display: flex;
             align-items: center;
+            transition: opacity 0.3s ease;
         }
 
         /* Highlight bar in center - vertical stripe */
@@ -113,13 +114,46 @@
         }
 
         .number-item.winner {
-            animation: popWinner 0.5s ease-out forwards;
+            animation: popWinner 0.6s ease-out forwards;
         }
 
         @keyframes popWinner {
             0% { transform: scale(1); }
-            50% { transform: scale(1.25); text-shadow: 0 0 80px currentColor, 0 0 120px currentColor; }
-            100% { transform: scale(1.15); text-shadow: 0 0 60px currentColor, 0 0 100px currentColor; }
+            40% { transform: scale(1.5); text-shadow: 0 0 80px currentColor, 0 0 120px currentColor; }
+            60% { transform: scale(1.4); }
+            100% { transform: scale(1.45); text-shadow: 0 0 100px currentColor, 0 0 150px currentColor; }
+        }
+
+        /* Winner overlay for bigger display */
+        .winner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .winner-overlay.show {
+            opacity: 1;
+        }
+
+        .winner-number {
+            font-size: clamp(12rem, 50vw, 30rem);
+            font-weight: bold;
+            text-shadow: 0 0 50px currentColor, 0 0 100px currentColor, 0 0 150px currentColor, 0 0 200px rgba(255,255,255,0.5);
+            animation: winnerPulse 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes winnerPulse {
+            from { transform: scale(1); filter: brightness(1); }
+            to { transform: scale(1.05); filter: brightness(1.2); }
         }
 
         .confetti {
@@ -303,6 +337,10 @@
                 font-size: clamp(5rem, 35vh, 14rem);
             }
 
+            .winner-number {
+                font-size: clamp(10rem, 60vh, 25rem);
+            }
+
             .settings-bar {
                 padding: 3px 0;
             }
@@ -361,6 +399,10 @@
     <div class="spinner-container" id="spinnerContainer">
         <div class="spinner-track" id="spinnerTrack"></div>
     </div>
+
+    <div class="winner-overlay" id="winnerOverlay">
+        <div class="winner-number" id="winnerNumber"></div>
+    </div>
     
     <div class="info-bar">
         <div class="status" id="status">Натисни за старт!</div>
@@ -398,6 +440,8 @@
         const participantInput = document.getElementById('participantCount');
         const status = document.getElementById('status');
         const remaining = document.getElementById('remaining');
+        const winnerOverlay = document.getElementById('winnerOverlay');
+        const winnerNumber = document.getElementById('winnerNumber');
 
         // Calculate item width based on container
         function calculateItemWidth() {
@@ -603,6 +647,25 @@
             });
         }
 
+        // Get the number currently in the center of the viewport
+        function getCenterNumber() {
+            const containerWidth = spinnerContainer.clientWidth;
+            const containerCenter = containerWidth / 2;
+            
+            // Calculate which item is at the center
+            // position is negative (moving left), so we need absolute value
+            const scrollOffset = Math.abs(position);
+            const centerPosition = scrollOffset + containerCenter;
+            
+            // Find which item index this corresponds to
+            const itemIndex = Math.floor(centerPosition / itemWidth);
+            
+            // Get the actual number (accounting for copies)
+            const actualIndex = itemIndex % numbers.length;
+            
+            return actualIndex;
+        }
+
         // Animation - horizontal scrolling (right to left)
         function animate() {
             if (!isSpinning) return;
@@ -616,11 +679,8 @@
 
             spinnerTrack.style.transform = `translateY(-50%) translateX(${position}px)`;
 
-            // Calculate current visible number (center of container)
-            const containerWidth = spinnerContainer.clientWidth;
-            const centerOffset = containerWidth / 2 - itemWidth / 2;
-            const adjustedPos = Math.abs(position) + centerOffset;
-            currentIndex = Math.floor(adjustedPos / itemWidth) % numbers.length;
+            // Update current index based on center position
+            currentIndex = getCenterNumber();
 
             animationId = requestAnimationFrame(animate);
         }
@@ -633,6 +693,10 @@
             }
 
             if (isWinnerDisplayed) {
+                // Hide winner overlay and show spinner again
+                winnerOverlay.classList.remove('show');
+                spinnerContainer.style.opacity = '1';
+                
                 // Remove previous winner and continue
                 const winner = numbers[currentIndex];
                 numbers = numbers.filter(n => n !== winner);
@@ -668,6 +732,18 @@
             cancelAnimationFrame(animationId);
             stopMusic();
 
+            // Snap to center - adjust position so number is perfectly centered
+            const containerWidth = spinnerContainer.clientWidth;
+            const containerCenter = containerWidth / 2;
+            const scrollOffset = Math.abs(position);
+            const currentItemStart = currentIndex * itemWidth;
+            const itemCenter = currentItemStart + (itemWidth / 2);
+            
+            // Calculate the position that would center this item
+            const targetPosition = -(currentItemStart - containerCenter + itemWidth / 2);
+            position = targetPosition;
+            spinnerTrack.style.transform = `translateY(-50%) translateX(${position}px)`;
+
             enterBtn.textContent = '▶️ ПРОДЪЛЖИ';
             enterBtn.classList.remove('spinning');
             
@@ -687,6 +763,12 @@
                 }
             });
 
+            // Hide the spinner and show big winner overlay
+            spinnerContainer.style.opacity = '0';
+            winnerNumber.textContent = winner;
+            winnerNumber.style.color = getNumberColor(winner);
+            winnerOverlay.classList.add('show');
+
             createConfetti();
 
             status.textContent = `🎉 Число ${winner}!`;
@@ -696,7 +778,7 @@
         function createConfetti() {
             const colors = ['#ff6b6b', '#ffd700', '#4fc3f7', '#81c784', '#ba68c8', '#ffb74d', '#f06292', '#7986cb'];
             const shapes = ['❄', '✦', '★', '●', '■'];
-            const confettiCount = window.innerWidth < 500 ? 50 : 100;
+            const confettiCount = window.innerWidth < 500 ? 60 : 120;
 
             for (let i = 0; i < confettiCount; i++) {
                 const confetti = document.createElement('div');
@@ -765,6 +847,8 @@
             cancelAnimationFrame(animationId);
             stopMusic();
             position = 0;
+            winnerOverlay.classList.remove('show');
+            spinnerContainer.style.opacity = '1';
             enterBtn.textContent = '🎰 ЗАВЪРТИ';
             enterBtn.classList.remove('spinning');
             participantInput.disabled = false;
